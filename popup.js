@@ -135,35 +135,6 @@ const searchHandler = function (e) {
 
 searchInput.addEventListener('keyup', searchHandler);
 
-function extractCredentialsSets(data) {
-  const keys = Object.keys(data);
-  const credentials = [];
-
-  for (const key of keys) {
-    if (key.startsWith('username')) {
-      const passwordField = 'password' + key.substring(8);
-      if (data[passwordField]) {
-        credentials.push({
-          username: data[key],
-          password: data['password' + key.substring(8)],
-          title: data.hasOwnProperty('title' + key.substring(8))
-            ? data['title' + key.substring(8)]
-            : data.hasOwnProperty('title')
-              ? data['title']
-              : '',
-          comment: data.hasOwnProperty('comment' + key.substring(8))
-            ? data['comment' + key.substring(8)]
-            : data.hasOwnProperty('comment')
-              ? data['comment']
-              : '',
-        });
-      }
-    }
-  }
-
-  return credentials;
-}
-
 function addCredentialsToList(credentials, credentialName, list) {
   const item = document.createElement('li');
   item.classList.add('list__item', 'list__item--three-line');

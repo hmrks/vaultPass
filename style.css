@@ -48,6 +48,38 @@
   color: white;
 }
 
+.button--warning {
+  background-color: var(--red);
+  border-color: var(--red-alt);
+  color: white;
+}
+
+.button--disabled {
+  background-color: var(--grey-subtle);
+  border-color: var(--grey-light);
+  color: var(--grey);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.button--shake {
+  animation: shake 0.3s ease;
+}
+
 .nobutton {
   all: unset;
   font-size: 1rem;
@@ -298,6 +330,11 @@ a {
   height: 20px;
 }
 
+.icon--small {
+  width: 16px;
+  height: 16px;
+}
+
 .icon--inline {
   display: inline-block;
   vertical-align: middle;
@@ -307,4 +344,8 @@ a {
 
 .gutter {
   margin-bottom: 1rem;
+}
+
+.hidden {
+  display: none;
 }
