@@ -105,8 +105,6 @@ async function autoFillSecrets(message, sender) {
   const vaultToken = await storage.local.get('vaultToken');
   const vaultAddress = await storage.sync.get('vaultAddress');
   const secretList = await storage.sync.get('secrets', []);
-  const storePath = await storage.sync.get('storePath');
-  const storeComponents = storePathComponents(storePath);
 
   if (!vaultToken || !vaultAddress) return;
 
@@ -117,17 +115,29 @@ async function autoFillSecrets(message, sender) {
 
   let loginCount = 0;
 
-  for (const secret of secretList) {
+  const delimiter = '##';
+
+  for (const combined of secretList) {
+    const parts = combined.split(delimiter);
+    if (parts.length !== 2) {
+      console.error('Unexpected secret format:', combined);
+      continue;
+    }
+
+    const [secretStorePath, secretName] = parts;
+    const storeComponents = storePathComponents(secretStorePath);
+
     const secretKeys = await vault.list(
-      `/${storeComponents.root}/metadata/${storeComponents.subPath}/${secret}`
+      `/${storeComponents.root}/metadata/${storeComponents.subPath}/${secretName}`
     );
+
     for (const key of secretKeys.data.keys) {
       const pattern = new RegExp(key);
       const patternMatches = pattern.test(hostname);
       // If the key is an exact match to the current hostname --> autofill
       if (hostname === clearHostname(key)) {
         const credentials = await vault.get(
-          `/${storeComponents.root}/data/${storeComponents.subPath}/${secret}${key}`
+          `/${storeComponents.root}/data/${storeComponents.subPath}/${secretName}${key}`
         );
 
         chrome.tabs.sendMessage(sender.tab.id, {
@@ -163,7 +173,7 @@ async function renewToken(force = false) {
       if (token.data.ttl > 3600) {
         refreshTokenTimer(1800);
       } else {
-        refreshTokenTimer((token.data.ttl / 2));
+        refreshTokenTimer(token.data.ttl / 2);
       }
 
       if (force || token.data.ttl <= 600) {
@@ -190,25 +200,25 @@ async function renewToken(force = false) {
 }
 
 function setupTokenAutoRenew(interval = 1800) {
-  chrome.alarms.get(tokenRenewAlarm, function(exists) {
+  chrome.alarms.get(tokenRenewAlarm, function (exists) {
     if (exists) {
       chrome.alarms.clear(tokenRenewAlarm);
     }
 
     chrome.alarms.create(tokenRenewAlarm, {
-      periodInMinutes: interval / 60
+      periodInMinutes: interval / 60,
     });
   });
 }
 
 function refreshTokenTimer(delay = 45) {
-  chrome.alarms.get(tokenCheckAlarm, function(exists) {
+  chrome.alarms.get(tokenCheckAlarm, function (exists) {
     if (exists) {
       chrome.alarms.clear(tokenCheckAlarm);
     }
-    
+
     chrome.alarms.create(tokenCheckAlarm, {
-      delayInMinutes: delay / 60
+      delayInMinutes: delay / 60,
     });
   });
 }
@@ -234,11 +244,11 @@ chrome.alarms.onAlarm.addListener(async function (alarm) {
   if (alarm.name === tokenCheckAlarm) {
     await renewToken();
   }
-  
+
   if (alarm.name === tokenRenewAlarm) {
     await renewToken(true);
   }
-})
+});
 
 chrome.runtime.onMessage.addListener(function (message, sender) {
   if (message.type === 'auto_fill_secrets') {
@@ -250,4 +260,3 @@ chrome.runtime.onMessage.addListener(function (message, sender) {
     refreshTokenTimer();
   }
 });
-
